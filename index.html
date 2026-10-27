@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Juegos Integrados: Sílabas de la P</title>
+    
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Juego interactivo educativo integrado para aprender sílabas.">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Open+Sans:wght@600;800&family=Pacifico&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS Combinado -->
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            transition: background 0.8s ease;
+        }
+
+        /* ===== ESTILOS APP 1 ===== */
+        .font-game { font-family: 'Fredoka One', cursive; }
+        .font-cursive { font-family: 'Pacifico', cursive; }
+        .font-app1 { font-family: 'Open Sans', sans-serif; }
+
+        #gameArea {
+            position: relative;
+            touch-action: none !important;
+        }
+
+        #svgOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 30;
+            overflow: visible;
+        }
+
+        .silaba-card {
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s ease;
+            cursor: pointer;
+            touch-action: none !important;
+            position: relative;
+            z-index: 20;
+        }
+
+        .silaba-card:active { transform: scale(0.92); }
+        .silaba-objetivo {
+            animation: pulseGlow 1.4s infinite alternate;
+            box-shadow: 0 0 22px #ffea00;
+            border-color: #ffea00 !important;
+        }
+        @keyframes pulseGlow {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
+        }
+
+        .error-shake {
+            animation: shakeApp1 0.4s ease-in-out;
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+        }
+        @keyframes shakeApp1 {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* ===== ESTILOS APP 2 ===== */
+        .font-app2 { font-family: 'Fredoka', cursive, sans-serif; }
+        
+        .bouncing-toy { animation: bounce 2s infinite; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .pulse-btn { animation: pulse-scale 1.5s infinite; }
+        @keyframes pulse-scale {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        .word-wrap { position: relative; display: inline-block; }
+        .oval-ring {
+            position: absolute;
+            inset: -9px -14px;
+            border: 4px solid #16a34a;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: oval-pop .45s cubic-bezier(.34,1.56,.64,1) both, oval-glow 1.4s ease-in-out .45s infinite alternate;
+        }
+        @keyframes oval-pop {
+            0% { transform: scale(.4); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes oval-glow {
+            from { box-shadow: 0 0 4px rgba(34,197,94,.6); }
+            to { box-shadow: 0 0 14px rgba(34,197,94,.9); }
+        }
+
+        .shake { animation: shakeApp2 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shakeApp2 {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-5px, 0, 0); }
+            40%, 60% { transform: translate3d(5px, 0, 0); }
+        }
+
+        .o { stroke: #1e293b; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+        .fig-svg * { transform-box: fill-box; }
+        .a-bob { animation: f-bob 2s ease-in-out infinite; transform-origin: center bottom; }
+        @keyframes f-bob { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-3px) scale(1.02, .98); } }
+        .a-blink { animation: f-blink 4s infinite; transform-origin: center; }
+        @keyframes f-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+        .a-wag { animation: f-wag .55s ease-in-out infinite alternate; transform-origin: left bottom; }
+        @keyframes f-wag { from { transform: rotate(-14deg); } to { transform: rotate(16deg); } }
+        .a-wing { animation: f-wing .7s ease-in-out infinite alternate; transform-origin: left top; }
+        @keyframes f-wing { from { transform: rotate(-8deg); } to { transform: rotate(12deg); } }
+        .a-sway { animation: f-sway 2.4s ease-in-out infinite alternate; transform-origin: center top; }
+        @keyframes f-sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+        .a-dig { animation: f-dig 1.8s ease-in-out infinite; transform-origin: center bottom; }
+        @keyframes f-dig { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } }
+        .a-swim { animation: f-swim 3s ease-in-out infinite; }
+        @keyframes f-swim { 0%, 100% { transform: translateX(-4px); } 50% { transform: translateX(4px); } }
+        .a-tail { animation: f-tail .5s ease-in-out infinite alternate; transform-origin: left center; }
+        @keyframes f-tail { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
+        .a-bubble { animation: f-bubble 2.4s ease-in infinite; }
+        @keyframes f-bubble { 0% { transform: translateY(8px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-14px); opacity: 0; } }
+        .a-twinkle { animation: f-twinkle 1.4s ease-in-out infinite; transform-origin: center; }
+        @keyframes f-twinkle { 0%, 100% { transform: scale(.4) rotate(0); opacity: .4; } 50% { transform: scale(1.1) rotate(25deg); opacity: 1; } }
+        .a-flash { animation: f-flash 1s ease-in-out infinite alternate; transform-origin: center; }
+        @keyframes f-flash { from { transform: scale(.9); opacity: .7; } to { transform: scale(1.12); opacity: 1; } }
+        .a-swing { animation: f-swing 2s ease-in-out infinite alternate; transform-origin: center top; }
+        @keyframes f-swing { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+        .a-pinch { animation: f-pinch 1.2s ease-in-out infinite alternate; transform-origin: center 55%; }
+        @keyframes f-pinch { from { transform: rotate(-4deg); } to { transform: rotate(5deg); } }
+        .a-bucket { animation: f-bucket 2s ease-in-out infinite alternate; }
+        @keyframes f-bucket { from { transform: translateY(-4px); } to { transform: translateY(8px); } }
+        .a-float { animation: f-float 2.6s ease-in-out infinite; transform-origin: center; }
+        @keyframes f-float { 0%, 100% { transform: translateY(2px) scale(1, 1); } 50% { transform: translateY(-5px) scale(1.04, .97); } }
+        .a-door { animation: f-door 2.6s ease-in-out infinite; transform-origin: left center; }
+        @keyframes f-door { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.38); } }
+        .a-tent { animation: f-tent 1.2s ease-in-out infinite alternate; transform-origin: center top; }
+        .a-tent.b { animation-delay: -.6s; }
+        @keyframes f-tent { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+        .a-tongue { animation: f-tongue .6s ease-in-out infinite alternate; transform-origin: center top; }
+        @keyframes f-tongue { from { transform: scaleY(.7); } to { transform: scaleY(1.15); } }
+        .a-whisker { animation: f-whisker 1.4s ease-in-out infinite alternate; transform-origin: center; }
+        @keyframes f-whisker { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+        .a-ear { animation: f-ear 3s ease-in-out infinite; transform-origin: center bottom; }
+        @keyframes f-ear { 0%, 85%, 100% { transform: rotate(0); } 90% { transform: rotate(-10deg); } 95% { transform: rotate(6deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================== -->
+    <!-- CONTENEDOR ACTIVIDAD 1: UNIR SÍLABAS          -->
+    <!-- ============================================== -->
+    <div id="app1-container" class="flex flex-col h-screen max-h-screen justify-between p-2 sm:p-4 font-app1 w-full relative">
+        <header class="bg-white/90 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-2 z-30">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <span class="text-3xl sm:text-4xl animate-bounce">🐧</span>
+                <div>
+                    <h1 id="tituloJuego" class="text-lg sm:text-2xl font-game text-pink-600 leading-tight">Actividad 1: Unir Sílabas</h1>
+                    <p class="text-xs text-gray-600 font-bold">¡Une las sílabas iguales en orden con el dedo!</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-4 bg-amber-50 p-1.5 sm:p-2 rounded-xl border border-amber-200 text-xs sm:text-base font-bold">
+                <div class="flex items-center gap-1 text-amber-800">
+                    <span>Ejercicio:</span>
+                    <span id="ejercicioCount" class="bg-amber-200 px-2 py-0.5 rounded-lg text-amber-900">1</span>/10
+                </div>
+                <div class="flex items-center gap-1 text-green-600">
+                    <span>Aciertos:</span>
+                    <span id="aciertosCount1" class="bg-green-100 px-2 py-0.5 rounded-lg text-green-800">0</span>
+                </div>
+                <div class="flex items-center gap-1 text-red-500">
+                    <span>Errores:</span>
+                    <span id="erroresCount1" class="bg-red-100 px-2 py-0.5 rounded-lg text-red-800">0</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="pronunciarSilabaObjetivo()" class="flex items-center gap-1 bg-yellow-400 hover:bg-yellow-500 active:scale-95 text-yellow-950 font-game px-3 py-2 rounded-xl shadow-md transition text-xs sm:text-sm">
+                    <span class="text-base sm:text-lg">🔊</span>
+                    <span>Repetir sílaba</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="w-full bg-white/50 rounded-full h-3 my-2 overflow-hidden shadow-inner border border-white/60">
+            <div id="progressBar1" class="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-full w-[10%] transition-all duration-500 rounded-full"></div>
+        </div>
+
+        <main id="gameArea" class="relative flex-1 bg-white/75 backdrop-blur-md rounded-3xl p-3 sm:p-6 shadow-2xl flex justify-between items-center my-1 overflow-hidden border-4 border-white">
+            <svg id="svgOverlay">
+                <defs>
+                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="3" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+                </defs>
+            </svg>
+            <div id="tronco1" class="flex flex-col h-full justify-around items-center w-1/4 z-20"></div>
+            <div id="tronco2" class="flex flex-col h-full justify-around items-center w-1/4 z-20"></div>
+            <div id="tronco3" class="flex flex-col h-full justify-around items-center w-1/4 z-20"></div>
+        </main>
+
+        <div id="resultadoModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl transform transition-all border-4 border-yellow-300">
+                <div id="medallaIcon" class="text-6xl sm:text-7xl mb-2 animate-bounce">🏆</div>
+                <h2 class="text-2xl sm:text-3xl font-game text-purple-700 mb-1">¡REPORTE PARCIAL!</h2>
+                <p id="mensajeFinal" class="text-gray-600 font-semibold mb-4">Completaste los 10 ejercicios con éxito.</p>
+                
+                <div class="bg-purple-50 p-4 rounded-2xl mb-6 space-y-2 font-bold text-gray-700 border border-purple-100">
+                    <div class="flex justify-between items-center text-green-600">
+                        <span>Aciertos:</span>
+                        <span id="resAciertos" class="text-2xl font-game">0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-red-500">
+                        <span>Errores:</span>
+                        <span id="resErrores" class="text-2xl font-game">0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-indigo-600 border-t pt-2 border-purple-200">
+                        <span>Efectividad:</span>
+                        <span id="resPorcentaje" class="text-2xl font-game">100%</span>
+                    </div>
+                </div>
+
+                <div id="estrellas" class="text-3xl mb-6 text-yellow-400">⭐⭐⭐⭐⭐</div>
+
+                <button id="btnModal1" class="w-full bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-white font-game text-xl py-3 px-6 rounded-2xl shadow-lg transform active:scale-95 transition">
+                    Siguiente Actividad ➡️
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- CONTENEDOR ACTIVIDAD 2: IDENTIFICAR FIGURAS   -->
+    <!-- ============================================== -->
+    <div id="app2-container" class="hidden flex-col items-center justify-start min-h-screen p-4 font-app2 w-full">
+        
+        <header class="w-full max-w-4xl bg-white/90 backdrop-blur-md rounded-3xl shadow-lg p-4 mb-4 flex items-center justify-between border-4 border-amber-300">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-amber-400 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-md bouncing-toy">P</div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-sky-600">Actividad 2: ¡Rodea la Palabra!</h1>
+                    <p class="text-xs md:text-sm text-slate-500">Rodea la palabra que corresponde a la figura</p>
+                </div>
+            </div>
+            <div class="flex space-x-3 text-sm font-semibold">
+                <div class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-2xl flex items-center shadow-inner">
+                    <i class="fa-solid fa-star mr-1.5 text-emerald-500"></i>
+                    <span id="score-aciertos2">0</span>
+                </div>
+                <div class="bg-rose-100 text-rose-700 px-3 py-1.5 rounded-2xl flex items-center shadow-inner">
+                    <i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-500"></i>
+                    <span id="score-fallas2">0</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="w-full max-w-4xl flex-1 flex flex-col items-center justify-center">
+            
+            <div id="screen-welcome" class="w-full bg-white rounded-3xl shadow-xl p-8 text-center border-4 border-sky-300 flex flex-col items-center max-w-xl">
+                <div class="w-32 h-32 bg-sky-100 rounded-full flex items-center justify-center mb-6 shadow-inner bouncing-toy">
+                    <svg viewBox="0 0 24 24" class="w-20 h-20 text-sky-500 fill-current">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold text-slate-700 mb-3">¡Superaste la Primera Parte!</h2>
+                <p class="text-slate-600 mb-8 text-base md:text-lg">
+                    Ahora observa cada figura en la columna y rodea la palabra correcta. ¡Son 3 rondas de 5 figuras!
+                </p>
+                <button onclick="startGame()" class="bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white text-xl font-bold px-8 py-4 rounded-3xl shadow-lg transform transition active:scale-95 pulse-btn flex items-center space-x-3">
+                    <i class="fa-solid fa-play text-2xl"></i>
+                    <span>¡COMENZAR ACTIVIDAD 2!</span>
+                </button>
+            </div>
+
+            <div id="screen-game" class="w-full hidden flex flex-col items-center">
+                <div class="w-full bg-white/90 rounded-2xl p-3 mb-4 shadow-md flex justify-between items-center border-2 border-sky-200">
+                    <span class="text-sm md:text-base font-bold text-sky-600 uppercase tracking-wider" id="round-indicator">Ronda 1 de 3</span>
+                    <div class="w-1/3 bg-slate-100 rounded-full h-3 overflow-hidden">
+                        <div id="progress-bar2" class="bg-gradient-to-r from-sky-400 to-indigo-500 h-full w-1/3 transition-all duration-500 rounded-full"></div>
+                    </div>
+                    <button onclick="speakInstruction()" class="bg-sky-100 hover:bg-sky-200 text-sky-600 px-3 py-1.5 rounded-xl text-xs md:text-sm font-bold flex items-center transition shadow-sm">
+                        <i class="fa-solid fa-volume-high mr-1.5"></i> Escuchar Instrucción
+                    </button>
+                </div>
+                <div class="w-full bg-white rounded-3xl shadow-xl p-4 md:p-6 border-4 border-sky-200 flex flex-col space-y-4" id="board-container">
+                    <!-- Las 5 filas de la ronda se generan dinámicamente aquí -->
+                </div>
+            </div>
+
+            <div id="screen-result" class="w-full hidden bg-white rounded-3xl shadow-xl p-8 text-center border-4 border-emerald-300 flex flex-col items-center max-w-xl">
+                <div class="w-28 h-28 bg-emerald-100 rounded-full flex items-center justify-center mb-4 shadow-inner bouncing-toy text-emerald-500 text-5xl">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold text-slate-700 mb-2" id="result-title">¡Excelente Trabajo!</h2>
+                <p class="text-slate-600 mb-6 text-base" id="result-message">Completaste todas las pruebas.</p>
+
+                <div class="flex justify-center space-x-6 mb-8 w-full max-w-xs">
+                    <div class="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-4 flex-1 text-center">
+                        <p class="text-xs text-slate-500 font-semibold uppercase">Aciertos</p>
+                        <p class="text-3xl font-bold text-emerald-600" id="final-aciertos">0</p>
+                    </div>
+                    <div class="bg-rose-50 border-2 border-rose-200 rounded-2xl p-4 flex-1 text-center">
+                        <p class="text-xs text-slate-500 font-semibold uppercase">Fallas</p>
+                        <p class="text-3xl font-bold text-rose-600" id="final-fallas">0</p>
+                    </div>
+                </div>
+
+                <button id="btnModal2" class="bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white text-xl font-bold px-8 py-4 rounded-3xl shadow-lg transform transition active:scale-95 pulse-btn flex items-center space-x-3">
+                    <!-- Dinámico -->
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- LOGICA JAVASCRIPT DE AMBAS APLICACIONES        -->
+    <!-- ============================================== -->
+    <script>
+        // Configuración Global y Transición
+        const backgroundApp1 = "linear-gradient(135deg, #ffd89b 0%, #19547b 100%)";
+        const backgroundApp2 = "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%)";
+
+        window.onload = function() {
+            document.body.style.background = backgroundApp1;
+            iniciarNuevoEjercicio();
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    window.speechSynthesis.getVoices();
+                };
+            }
+        };
+
+        function hablar(texto) {
+            if (!('speechSynthesis' in window)) return;
+            speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(texto);
+            utterance.lang = "es-MX";
+            utterance.rate = 0.85;
+            utterance.pitch = 1.15;
+            const voices = speechSynthesis.getVoices();
+            const esVoice = voices.find(v => v.lang.startsWith("es"));
+            if (esVoice) utterance.voice = esVoice;
+            speechSynthesis.speak(utterance);
+        }
+
+        /* -----------------------------------------------------
+           CÓDIGO APP 1: UNIR SÍLABAS (Integrado)
+           ----------------------------------------------------- */
+        const silabasApp1 = ["pa", "pe", "pi", "po", "pu"];
+        const pronunciacionApp1 = { "pa": "Pá", "pe": "Pé", "pi": "Pí", "po": "Pó", "pu": "Pú" };
+        const frasesPositivas = ["¡Muy bien!", "¡Excelente!", "¡Acertaste!", "¡Fantástico!", "¡Genial!"];
+
+        const TOTAL_EJERCICIOS = 10;
+        let ejercicioActual = 1;
+        let aciertos1 = 0;
+        let errores1 = 0;
+        let silabaObjetivo = "";
+        let pasoActual = 1;
+
+        let nodoOrigen = null;
+        let lineaTemporal = null;
+        let activePointerId = null;
+        const svg = document.getElementById("svgOverlay");
+
+        function pronunciarSilabaObjetivo() {
+            if (!silabaObjetivo) return;
+            const vozTexto = pronunciacionApp1[silabaObjetivo.toLowerCase()] || silabaObjetivo;
+            hablar("Busca la sílaba " + vozTexto);
+        }
+
+        function mezclar(array) {
+            return [...array].sort(() => Math.random() - 0.5);
+        }
+
+        function crearColumna(idColumna, datosSilabas, estiloClase) {
+            const contenedor = document.getElementById(idColumna);
+            contenedor.innerHTML = "";
+            datosSilabas.forEach(silaba => {
+                const item = document.createElement("div");
+                item.className = `silaba-card text-2xl sm:text-4xl md:text-5xl font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-2xl bg-white text-gray-800 border-4 border-purple-200 shadow-md text-center select-none ${estiloClase}`;
+                item.textContent = silaba;
+                item.dataset.valor = silaba.toLowerCase();
+                contenedor.appendChild(item);
+            });
+        }
+
+        function obtenerPuntoBorde(elemento, lado) {
+            const svgRect = svg.getBoundingClientRect();
+            const r = elemento.getBoundingClientRect();
+            return {
+                x: (lado === "derecha" ? r.right : r.left) - svgRect.left,
+                y: (r.top + r.height / 2) - svgRect.top
+            };
+        }
+
+        function iniciarNuevoEjercicio() {
+            svg.innerHTML = `<defs><filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter></defs>`;
+            pasoActual = 1;
+            nodoOrigen = null;
+            lineaTemporal = null;
+            silabaObjetivo = silabasApp1[(ejercicioActual - 1) % silabasApp1.length];
+
+            crearColumna("tronco1", mezclar(silabasApp1), "font-cursive text-pink-600 border-pink-200");
+            crearColumna("tronco2", mezclar(silabasApp1), "font-game text-indigo-600 border-indigo-200");
+            crearColumna("tronco3", mezclar(silabasApp1.map(s => s.toUpperCase())), "font-game text-emerald-600 border-emerald-200");
+
+            resaltarObjetivo();
+            setTimeout(pronunciarSilabaObjetivo, 350);
+        }
+
+        function resaltarObjetivo() {
+            const idColumna = pasoActual === 1 ? "#tronco1" : "#tronco2";
+            const nodos = document.querySelectorAll(`${idColumna} .silaba-card`);
+            nodos.forEach(el => {
+                if (el.dataset.valor === silabaObjetivo) {
+                    el.classList.add("silaba-objetivo");
+                    el.addEventListener("pointerdown", iniciarArrastre, { passive: false });
+                }
+            });
+        }
+
+        function iniciarArrastre(e) {
+            e.preventDefault();
+            nodoOrigen = e.currentTarget;
+            activePointerId = e.pointerId;
+            if (nodoOrigen.setPointerCapture) nodoOrigen.setPointerCapture(e.pointerId);
+
+            const posCentro = obtenerPuntoBorde(nodoOrigen, "derecha");
+            lineaTemporal = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            lineaTemporal.setAttribute("x1", posCentro.x);
+            lineaTemporal.setAttribute("y1", posCentro.y);
+            lineaTemporal.setAttribute("x2", posCentro.x);
+            lineaTemporal.setAttribute("y2", posCentro.y);
+            lineaTemporal.setAttribute("stroke", pasoActual === 1 ? "#FF4081" : "#10B981");
+            lineaTemporal.setAttribute("stroke-width", "8");
+            lineaTemporal.setAttribute("stroke-linecap", "round");
+            lineaTemporal.setAttribute("filter", "url(#glow)");
+            svg.appendChild(lineaTemporal);
+
+            nodoOrigen.addEventListener("pointermove", moverLinea, { passive: false });
+            nodoOrigen.addEventListener("pointerup", finalizarArrastre, { passive: false });
+            nodoOrigen.addEventListener("pointercancel", finalizarArrastre, { passive: false });
+        }
+
+        function moverLinea(e) {
+            if (!lineaTemporal) return;
+            e.preventDefault();
+            const svgRect = svg.getBoundingClientRect();
+            lineaTemporal.setAttribute("x2", e.clientX - svgRect.left);
+            lineaTemporal.setAttribute("y2", e.clientY - svgRect.top);
+        }
+
+        function finalizarArrastre(e) {
+            if (!nodoOrigen) return;
+            nodoOrigen.removeEventListener("pointermove", moverLinea);
+            nodoOrigen.removeEventListener("pointerup", finalizarArrastre);
+            nodoOrigen.removeEventListener("pointercancel", finalizarArrastre);
+
+            if (nodoOrigen.releasePointerCapture && activePointerId !== null) {
+                try { nodoOrigen.releasePointerCapture(activePointerId); } catch(err){}
+            }
+
+            const elementoDestino = document.elementFromPoint(e.clientX, e.clientY);
+            validarSeleccion(elementoDestino);
+        }
+
+        function eliminarLineaTemporal(destino) {
+            if (!lineaTemporal) return;
+            const linea = lineaTemporal;
+            lineaTemporal = null;
+            if (destino) {
+                const p = obtenerPuntoBorde(destino, "izquierda");
+                linea.setAttribute("x2", p.x);
+                linea.setAttribute("y2", p.y);
+            }
+            linea.setAttribute("stroke", "#EF4444");
+            const anim = linea.animate([{ opacity: 1 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }],{ duration: 1000, easing: "ease-out" });
+            anim.onfinish = () => linea.remove();
+        }
+
+        function fijarLineaPermanente(destino) {
+            if (!lineaTemporal) return;
+            const posCentroDestino = obtenerPuntoBorde(destino, "izquierda");
+            lineaTemporal.setAttribute("x2", posCentroDestino.x);
+            lineaTemporal.setAttribute("y2", posCentroDestino.y);
+            lineaTemporal.setAttribute("stroke", pasoActual === 1 ? "#10B981" : "#8B5CF6");
+            lineaTemporal = null;
+        }
+
+        function validarSeleccion(destino) {
+            const cardDestino = destino ? destino.closest(".silaba-card") : null;
+            if (!cardDestino || !cardDestino.dataset || !cardDestino.dataset.valor) {
+                eliminarLineaTemporal();
+                return;
+            }
+
+            if (cardDestino.dataset.valor !== silabaObjetivo) {
+                errores1++;
+                document.getElementById("erroresCount1").textContent = errores1;
+                hablar("No, intenta de nuevo");
+                cardDestino.classList.add("error-shake");
+                setTimeout(() => cardDestino.classList.remove("error-shake"), 450);
+                eliminarLineaTemporal(cardDestino);
+                return;
+            }
+
+            if (pasoActual === 1 && cardDestino.parentElement.id === "tronco2") {
+                const frase = frasesPositivas[Math.floor(Math.random() * frasesPositivas.length)];
+                hablar(frase);
+                fijarLineaPermanente(cardDestino);
+                pasoActual = 2;
+                cardDestino.classList.add("silaba-objetivo");
+                resaltarObjetivo();
+                return;
+            }
+
+            if (pasoActual === 2 && cardDestino.parentElement.id === "tronco3") {
+                aciertos1++;
+                document.getElementById("aciertosCount1").textContent = aciertos1;
+                fijarLineaPermanente(cardDestino);
+                cardDestino.classList.add("bg-emerald-100", "border-emerald-400");
+                crearEfectoCelebracion();
+
+                setTimeout(() => {
+                    const vozTexto = pronunciacionApp1[silabaObjetivo.toLowerCase()] || silabaObjetivo;
+                    hablar(vozTexto);
+                }, 200);
+
+                setTimeout(siguienteEjercicio, 1300);
+                return;
+            }
+            eliminarLineaTemporal();
+        }
+
+        function siguienteEjercicio() {
+            ejercicioActual++;
+            if (ejercicioActual > TOTAL_EJERCICIOS) {
+                terminarJuego();
+                return;
+            }
+            document.getElementById("ejercicioCount").textContent = ejercicioActual;
+            document.getElementById("progressBar1").style.width = `${(ejercicioActual / TOTAL_EJERCICIOS) * 100}%`;
+            iniciarNuevoEjercicio();
+        }
+
+        // ============================================
+        // CONDICIONAL PRINCIPAL APP 1 -> APP 2
+        // ============================================
+        function terminarJuego() {
+            document.getElementById("progressBar1").style.width = "100%";
+            const modal = document.getElementById("resultadoModal");
+            const total = aciertos1 + errores1;
+            const porcentaje = total > 0 ? Math.round((aciertos1 / total) * 100) : 100;
+
+            document.getElementById("resAciertos").textContent = aciertos1;
+            document.getElementById("resErrores").textContent = errores1;
+            document.getElementById("resPorcentaje").textContent = `${porcentaje}%`;
+
+            let medalla = "🏆";
+            let estrellas = "⭐⭐⭐⭐⭐";
+            let mensaje = "";
+            const btnModal = document.getElementById("btnModal1");
+
+            // EVALUACIÓN DE CONDICIÓN (< 5 fallas aprueba, >= 5 repite)
+            if (errores1 < 5) {
+                mensaje = "¡Excelente! Has dominado las sílabas. Pasas a la siguiente actividad.";
+                btnModal.innerHTML = "Siguiente Actividad ➡️";
+                btnModal.setAttribute("onclick", "pasarActividad2()");
+                hablar("¡Felicidades! Completaste los ejercicios con éxito. Pasas a la segunda actividad.");
+            } else {
+                medalla = "🥉"; 
+                estrellas = "⭐⭐⭐"; 
+                mensaje = "Tuviste 5 o más fallas. ¡Debemos repetir la actividad para mejorar!";
+                btnModal.innerHTML = "Repetir Actividad 🔄";
+                btnModal.setAttribute("onclick", "reiniciarJuego()");
+                hablar("Debemos repetir la actividad para mejorar.");
+            }
+
+            document.getElementById("medallaIcon").textContent = medalla;
+            document.getElementById("estrellas").textContent = estrellas;
+            document.getElementById("mensajeFinal").textContent = mensaje;
+            modal.classList.remove("hidden");
+        }
+
+        function pasarActividad2() {
+            document.getElementById("resultadoModal").classList.add("hidden");
+            document.getElementById("app1-container").style.display = "none";
+            
+            document.body.style.background = backgroundApp2;
+            document.getElementById("app2-container").style.display = "flex";
+        }
+
+        function reiniciarJuego() {
+            ejercicioActual = 1; aciertos1 = 0; errores1 = 0;
+            document.getElementById("ejercicioCount").textContent = 1;
+            document.getElementById("aciertosCount1").textContent = 0;
+            document.getElementById("erroresCount1").textContent = 0;
+            document.getElementById("progressBar1").style.width = "10%";
+            document.getElementById("resultadoModal").classList.add("hidden");
+            iniciarNuevoEjercicio();
+        }
+
+        function crearEfectoCelebracion() {
+            const area = document.getElementById("gameArea");
+            const colores = ["#FF4081", "#7C4DFF", "#00E676", "#FFEA00", "#FF6E40"];
+            for (let i = 0; i < 25; i++) {
+                const confeti = document.createElement("div");
+                confeti.className = "confetti rounded-full";
+                confeti.style.left = `${Math.random() * 90 + 5}%`;
+                confeti.style.top = `${Math.random() * 20 + 5}%`;
+                confeti.style.backgroundColor = colores[Math.floor(Math.random() * colores.length)];
+                area.appendChild(confeti);
+                const anim = confeti.animate([
+                    { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                    { transform: `translateY(${Math.random() * 250 + 150}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                ], { duration: Math.random() * 800 + 800, easing: 'ease-out' });
+                anim.onfinish = () => confeti.remove();
+            }
+        }
+
+        /* -----------------------------------------------------
+           CÓDIGO APP 2: IDENTIFICAR FIGURAS (Integrado)
+           ----------------------------------------------------- */
+        const figuresBank = [
+            { id: 1, name: "pala", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><ellipse cx="50" cy="94" rx="30" ry="5" fill="#a16207" opacity=".3"/><g class="a-dig"><rect class="o" x="45" y="6" width="10" height="48" rx="4" fill="#b45309"/><rect class="o" x="36" y="4" width="28" height="9" rx="4.5" fill="#92400e"/><path class="o" d="M30 52 H70 Q72 84 50 92 Q28 84 30 52Z" fill="#94a3b8"/><path d="M40 60 V80" stroke="#f1f5f9" stroke-width="4" stroke-linecap="round"/></g></svg>` },
+            { id: 2, name: "pato", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><path d="M40 84 V92 M54 84 V92" stroke="#ea580c" stroke-width="5" stroke-linecap="round"/><path d="M33 93 H46 M47 93 H60" stroke="#ea580c" stroke-width="4" stroke-linecap="round"/><g class="a-bob"><path class="o" d="M20 58 Q8 52 12 40 Q22 44 30 54Z" fill="#facc15"/><ellipse class="o" cx="46" cy="64" rx="28" ry="20" fill="#facc15"/><path class="o a-wing" d="M32 60 Q46 50 60 64 Q46 76 32 60Z" fill="#fde047"/><circle class="o" cx="64" cy="36" r="16" fill="#facc15"/><path class="o" d="M76 36 Q94 34 92 43 Q86 48 76 45Z" fill="#fb923c"/><circle class="o" style="stroke-width:2" cx="68" cy="31" r="4.5" fill="#fff"/><circle class="a-blink" cx="69" cy="31" r="2.2" fill="#1e293b"/></g></svg>` },
+            { id: 3, name: "papá", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><g class="a-bob"><path class="o" d="M16 98 Q16 70 50 70 Q84 70 84 98Z" fill="#3b82f6"/><path class="o" style="stroke-width:2" d="M42 70 L50 82 L58 70Z" fill="#fff"/><path class="o" style="stroke-width:2" d="M47 78 H53 L54 90 L50 94 L46 90Z" fill="#ef4444"/><circle class="o" cx="50" cy="44" r="22" fill="#fcd9b6"/><path class="o" d="M28 42 Q26 16 50 16 Q74 16 72 42 Q64 28 50 28 Q36 28 28 42Z" fill="#78350f"/><circle cx="35" cy="54" r="4" fill="#fda4af" opacity=".7"/><circle cx="65" cy="54" r="4" fill="#fda4af" opacity=".7"/><g class="a-blink"><circle cx="42" cy="44" r="3.2" fill="#1e293b"/><circle cx="58" cy="44" r="3.2" fill="#1e293b"/></g><path class="o" style="stroke-width:2" d="M38 55 Q50 50 62 55 Q50 60 38 55Z" fill="#78350f"/><path d="M43 63 Q50 69 57 63" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/></g></svg>` },
+            { id: 4, name: "perro", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><path class="a-wag" d="M70 76 Q92 66 88 46" stroke="#1e293b" stroke-width="11" fill="none" stroke-linecap="round"/><path class="a-wag" d="M70 76 Q92 66 88 46" stroke="#b45309" stroke-width="6" fill="none" stroke-linecap="round"/><g class="a-bob"><ellipse class="o" cx="46" cy="76" rx="24" ry="19" fill="#f59e0b"/><ellipse class="o" cx="32" cy="92" rx="8" ry="5" fill="#fbbf24"/><ellipse class="o" cx="58" cy="92" rx="8" ry="5" fill="#fbbf24"/><circle class="o" cx="46" cy="44" r="22" fill="#f59e0b"/><path class="o a-ear" d="M27 30 Q10 34 14 58 Q28 58 30 44Z" fill="#92400e"/><path class="o a-ear" d="M65 30 Q82 34 78 58 Q64 58 62 44Z" fill="#92400e"/><ellipse class="o" cx="46" cy="52" rx="12" ry="9" fill="#fde68a"/><ellipse cx="46" cy="47" rx="4.5" ry="3.2" fill="#1e293b"/><g class="a-blink"><circle cx="37" cy="39" r="3.2" fill="#1e293b"/><circle cx="55" cy="39" r="3.2" fill="#1e293b"/></g><path class="o a-tongue" style="stroke-width:2" d="M42 56 Q46 68 50 56Z" fill="#fb7185"/><path d="M39 55 Q46 60 53 55" stroke="#1e293b" stroke-width="2.5" fill="none" stroke-linecap="round"/></g></svg>` },
+            { id: 5, name: "pelo", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><g class="a-sway"><path class="o" d="M20 94 Q4 22 50 10 Q96 22 80 94 Q66 80 66 58 L34 58 Q34 80 20 94Z" fill="#7c2d12"/></g><circle class="o" cx="50" cy="50" r="22" fill="#fcd9b6"/><g class="a-sway"><path class="o" d="M27 46 Q34 20 62 26 Q73 32 73 46 Q62 36 50 38 Q36 38 27 46Z" fill="#7c2d12"/></g><circle cx="36" cy="58" r="4" fill="#fda4af" opacity=".7"/><circle cx="64" cy="58" r="4" fill="#fda4af" opacity=".7"/><g class="a-blink"><circle cx="42" cy="50" r="3.2" fill="#1e293b"/><circle cx="58" cy="50" r="3.2" fill="#1e293b"/></g><path d="M43 60 Q50 67 57 60" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/><path class="a-twinkle" d="M88 16 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5z" fill="#fde047" stroke="#ca8a04" stroke-width="1.5"/><path class="a-twinkle" style="animation-delay:-.7s" d="M12 30 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z" fill="#fde047" stroke="#ca8a04" stroke-width="1.5"/></svg>` },
+            { id: 6, name: "pez", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><circle class="a-bubble" cx="12" cy="36" r="4" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/><circle class="a-bubble" style="animation-delay:-1.2s" cx="20" cy="24" r="3" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/><g class="a-swim"><path class="o a-tail" d="M66 50 L90 30 Q84 50 90 70Z" fill="#0891b2"/><ellipse class="o" cx="44" cy="50" rx="28" ry="21" fill="#22d3ee"/><path class="o" d="M34 32 Q46 16 60 34Z" fill="#0891b2"/><path class="o" d="M46 62 Q56 76 62 62Z" fill="#0891b2"/><path d="M50 38 Q57 50 50 62 M60 41 Q66 50 60 59" stroke="#0e7490" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle class="o" style="stroke-width:2" cx="30" cy="44" r="6" fill="#fff"/><circle class="a-blink" cx="29" cy="44" r="3" fill="#1e293b"/><path d="M18 56 Q24 61 30 57" stroke="#1e293b" stroke-width="2.5" fill="none" stroke-linecap="round"/></g></svg>` },
+            { id: 7, name: "piña", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><defs><clipPath id="clip-pina"><ellipse cx="50" cy="64" rx="26" ry="31"/></clipPath></defs><g class="a-sway"><path class="o" d="M50 34 L28 12 L44 30Z" fill="#22c55e"/><path class="o" d="M50 34 L72 12 L56 30Z" fill="#22c55e"/><path class="o" d="M50 34 L40 4 L50 24 L60 4Z" fill="#16a34a"/></g><g class="a-bob"><ellipse cx="50" cy="64" rx="26" ry="31" fill="#facc15"/><g clip-path="url(#clip-pina)" stroke="#b45309" stroke-width="2.5" fill="none"><path d="M20 40 L80 100 M20 56 L70 106 M30 34 L84 88 M80 40 L20 100 M80 56 L30 106 M70 34 L16 88"/></g><ellipse class="o" cx="50" cy="64" rx="26" ry="31" fill="none"/><path d="M38 48 Q36 58 40 68" stroke="#fef9c3" stroke-width="4" fill="none" stroke-linecap="round" opacity=".9"/></g></svg>` },
+            { id: 8, name: "pila", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><g class="a-bob"><rect class="o" x="41" y="8" width="18" height="12" rx="3" fill="#cbd5e1"/><rect class="o" x="30" y="18" width="40" height="74" rx="9" fill="#3b82f6"/><rect x="30" y="18" width="40" height="16" rx="8" fill="#1e293b"/><rect x="30" y="30" width="40" height="5" fill="#1e293b"/><path d="M50 62 L40 46 H48 L46 36 L60 54 H51 L53 62Z" fill="none"/><path class="o a-flash" style="stroke-width:2.5" d="M55 42 L40 62 H49 L45 80 L62 56 H52Z" fill="#fde047"/><path d="M37 40 V84" stroke="#93c5fd" stroke-width="3" stroke-linecap="round" opacity=".7"/></g></svg>` },
+            { id: 9, name: "pinza", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><path d="M2 28 H98" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/><g class="a-swing"><path class="o" d="M22 28 H78 V58 Q50 68 22 58Z" fill="#f472b6"/><path d="M30 40 H70 M30 50 H70" stroke="#fbcfe8" stroke-width="3" stroke-linecap="round" opacity=".8"/></g><g class="a-pinch"><rect class="o" x="37" y="18" width="12" height="76" rx="5" fill="#f59e0b"/><rect class="o" x="51" y="18" width="12" height="76" rx="5" fill="#fbbf24"/><circle class="o" cx="50" cy="52" r="8" fill="#cbd5e1"/><circle cx="50" cy="52" r="3" fill="#64748b"/></g></svg>` },
+            { id: 10, name: "pollo", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><path d="M40 84 V92 M54 84 V92" stroke="#ea580c" stroke-width="5" stroke-linecap="round"/><path d="M33 93 H46 M47 93 H60" stroke="#ea580c" stroke-width="4" stroke-linecap="round"/><g class="a-bob"><path class="o" d="M20 62 Q6 52 10 38 Q20 44 30 56Z" fill="#fbbf24"/><ellipse class="o" cx="46" cy="66" rx="28" ry="21" fill="#facc15"/><path class="o a-wing" d="M32 62 Q46 52 60 66 Q46 78 32 62Z" fill="#fde047"/><circle class="o" cx="52" cy="17" r="6" fill="#ef4444"/><circle class="o" cx="61" cy="15" r="6" fill="#ef4444"/><circle class="o" cx="68" cy="21" r="5" fill="#ef4444"/><circle class="o" cx="60" cy="36" r="18" fill="#facc15"/><path class="o" d="M76 33 L92 38 L76 44Z" fill="#fb923c"/><ellipse class="o" style="stroke-width:2" cx="73" cy="52" rx="4" ry="6" fill="#ef4444"/><circle class="o" style="stroke-width:2" cx="66" cy="31" r="4.5" fill="#fff"/><circle class="a-blink" cx="67" cy="31" r="2.2" fill="#1e293b"/></g></svg>` },
+            { id: 11, name: "pozo", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><path class="o" d="M24 60 V84 Q50 98 76 84 V60Z" fill="#cbd5e1"/><path d="M24 72 Q50 82 76 72 M38 64 V86 M62 64 V86" stroke="#94a3b8" stroke-width="2.5" fill="none"/><rect class="o" x="26" y="26" width="7" height="36" rx="2" fill="#92400e"/><rect class="o" x="67" y="26" width="7" height="36" rx="2" fill="#92400e"/><path class="o" d="M16 30 L50 8 L84 30Z" fill="#dc2626"/><ellipse class="o" cx="50" cy="60" rx="26" ry="8" fill="#475569"/><ellipse cx="50" cy="61" rx="20" ry="5" fill="#38bdf8"/><path d="M50 30 V44" stroke="#1e293b" stroke-width="2.5"/><g class="a-bucket"><path class="o" d="M42 44 H58 L56 58 H44Z" fill="#b45309"/><path d="M42 48 H58" stroke="#fbbf24" stroke-width="2.5"/></g></svg>` },
+            { id: 12, name: "pompa", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><defs><radialGradient id="grad-pompa" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#bae6fd"/><stop offset="80%" stop-color="#c4b5fd"/><stop offset="100%" stop-color="#f9a8d4"/></radialGradient></defs><circle class="a-bubble" cx="82" cy="34" r="5" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/><circle class="a-bubble" style="animation-delay:-1s" cx="76" cy="20" r="3.5" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/><circle cx="18" cy="76" r="9" fill="none" stroke="#1e293b" stroke-width="7"/><circle cx="18" cy="76" r="9" fill="none" stroke="#ec4899" stroke-width="3.5"/><path d="M12 83 L4 96" stroke="#1e293b" stroke-width="7" stroke-linecap="round"/><path d="M12 83 L4 96" stroke="#ec4899" stroke-width="3.5" stroke-linecap="round"/><g class="a-float"><circle cx="54" cy="50" r="30" fill="url(#grad-pompa)" fill-opacity=".85"/><circle class="o" style="stroke:#38bdf8;stroke-width:3.5" cx="54" cy="50" r="30" fill="none"/><path d="M36 38 Q40 28 52 25" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="72" cy="66" r="4" fill="#fff" opacity=".85"/></g></svg>` },
+            { id: 13, name: "puerta", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><rect class="o" x="20" y="6" width="60" height="88" rx="4" fill="#78350f"/><rect x="26" y="12" width="48" height="82" fill="#fde68a"/><g class="a-door"><rect class="o" x="26" y="12" width="48" height="82" fill="#d97706"/><rect class="o" style="stroke-width:2" x="32" y="18" width="36" height="24" rx="3" fill="#b45309"/><rect class="o" style="stroke-width:2" x="32" y="48" width="36" height="38" rx="3" fill="#b45309"/><circle class="o" style="stroke-width:2" cx="64" cy="58" r="4" fill="#fde047"/></g></svg>` },
+            { id: 14, name: "pulpo", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><g class="a-bob"><g class="a-tent"><path d="M30 62 Q16 76 26 88 Q32 94 40 86" stroke="#1e293b" stroke-width="11" fill="none" stroke-linecap="round"/><path d="M30 62 Q16 76 26 88 Q32 94 40 86" stroke="#a855f7" stroke-width="5.5" fill="none" stroke-linecap="round"/></g><g class="a-tent b"><path d="M42 66 Q34 84 44 93" stroke="#1e293b" stroke-width="11" fill="none" stroke-linecap="round"/><path d="M42 66 Q34 84 44 93" stroke="#a855f7" stroke-width="5.5" fill="none" stroke-linecap="round"/></g><g class="a-tent"><path d="M58 66 Q66 84 56 93" stroke="#1e293b" stroke-width="11" fill="none" stroke-linecap="round"/><path d="M58 66 Q66 84 56 93" stroke="#a855f7" stroke-width="5.5" fill="none" stroke-linecap="round"/></g><g class="a-tent b"><path d="M70 62 Q84 76 74 88 Q68 94 60 86" stroke="#1e293b" stroke-width="11" fill="none" stroke-linecap="round"/><path d="M70 62 Q84 76 74 88 Q68 94 60 86" stroke="#a855f7" stroke-width="5.5" fill="none" stroke-linecap="round"/></g><circle class="o" cx="50" cy="40" r="29" fill="#a855f7"/><path d="M32 26 Q38 18 48 17" stroke="#d8b4fe" stroke-width="4.5" fill="none" stroke-linecap="round"/><circle cx="30" cy="52" r="4" fill="#f9a8d4" opacity=".8"/><circle cx="70" cy="52" r="4" fill="#f9a8d4" opacity=".8"/><circle class="o" style="stroke-width:2" cx="40" cy="40" r="7.5" fill="#fff"/><circle class="o" style="stroke-width:2" cx="60" cy="40" r="7.5" fill="#fff"/><g class="a-blink"><circle cx="41" cy="41" r="3.6" fill="#1e293b"/><circle cx="59" cy="41" r="3.6" fill="#1e293b"/></g><path d="M42 55 Q50 62 58 55" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/></g></svg>` },
+            { id: 15, name: "puma", svg: `<svg viewBox="0 0 100 100" class="w-full h-full fig-svg"><g class="a-bob"><path class="o a-ear" d="M24 40 L20 10 L46 26Z" fill="#d9a35f"/><path class="o a-ear" d="M76 40 L80 10 L54 26Z" fill="#d9a35f"/><path d="M27 34 L25 18 L38 27Z" fill="#fda4af"/><path d="M73 34 L75 18 L62 27Z" fill="#fda4af"/><circle class="o" cx="50" cy="54" r="31" fill="#d9a35f"/><path d="M50 26 V38 M42 28 L44 38 M58 28 L56 38" stroke="#92400e" stroke-width="3" stroke-linecap="round"/><ellipse class="o" cx="50" cy="68" rx="17" ry="13" fill="#fef3c7"/><path class="o" style="stroke-width:2" d="M43 58 H57 L50 66Z" fill="#be185d"/><path d="M50 66 V72 M50 72 Q43 79 36 73 M50 72 Q57 79 64 73" stroke="#1e293b" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="40" cy="66" r="1.4" fill="#92400e"/><circle cx="36" cy="70" r="1.4" fill="#92400e"/><circle cx="60" cy="66" r="1.4" fill="#92400e"/><circle cx="64" cy="70" r="1.4" fill="#92400e"/><g class="a-blink"><ellipse class="o" style="stroke-width:2" cx="37" cy="48" rx="7" ry="6" fill="#fbbf24"/><ellipse class="o" style="stroke-width:2" cx="63" cy="48" rx="7" ry="6" fill="#fbbf24"/><ellipse cx="37" cy="48" rx="2" ry="4.5" fill="#1e293b"/><ellipse cx="63" cy="48" rx="2" ry="4.5" fill="#1e293b"/></g><g class="a-whisker" stroke="#1e293b" stroke-width="2" stroke-linecap="round"><path d="M32 68 L12 63 M32 72 L12 74"/><path d="M68 68 L88 63 M68 72 L88 74"/></g></g></svg>` }
+        ];
+
+        const generalDistractors = ["pala", "pato", "papá", "perro", "pelo", "pez", "piña", "pila", "pinza", "pollo", "pozo", "pompa", "puerta", "pulpo", "puma", "pupa", "paco", "pusa"];
+
+        let currentRound = 1;
+        const maxRounds = 3;
+        let aciertos2 = 0;
+        let fallas2 = 0;
+        let gamePool = [];
+        let currentRoundItems = [];
+        let completedInRound = 0;
+
+        function speakInstruction() {
+            hablar("RODEA LA PALABRA QUE CORRESPONDA A LA FIGURA");
+        }
+
+        function startGame() {
+            document.getElementById('screen-welcome').classList.add('hidden');
+            document.getElementById('screen-result').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+
+            currentRound = 1;
+            aciertos2 = 0;
+            fallas2 = 0;
+            gamePool = [...figuresBank].sort(() => Math.random() - 0.5);
+            updateStats2();
+
+            speakInstruction();
+            loadRound();
+        }
+
+        function updateStats2() {
+            document.getElementById('score-aciertos2').innerText = aciertos2;
+            document.getElementById('score-fallas2').innerText = fallas2;
+        }
+
+        function loadRound() {
+            if (currentRound > maxRounds) {
+                endGame();
+                return;
+            }
+
+            document.getElementById('round-indicator').innerText = `Ronda ${currentRound} de ${maxRounds}`;
+            document.getElementById('progress-bar2').style.width = `${(currentRound / maxRounds) * 100}%`;
+
+            completedInRound = 0;
+            const startIndex = (currentRound - 1) * 5;
+            currentRoundItems = gamePool.slice(startIndex, startIndex + 5);
+
+            const boardContainer = document.getElementById('board-container');
+            boardContainer.innerHTML = '';
+
+            currentRoundItems.forEach((item) => {
+                let distractors = generalDistractors.filter(w => w !== item.name);
+                distractors.sort(() => Math.random() - 0.5);
+                let options = [item.name, distractors[0], distractors[1]];
+                options.sort(() => Math.random() - 0.5);
+
+                const rowDiv = document.createElement('div');
+                rowDiv.className = `flex flex-col md:flex-row items-center justify-between p-3 bg-sky-50/70 rounded-2xl border-2 border-sky-100 shadow-sm relative transition-all duration-300`;
+                rowDiv.id = `row-item-${item.id}`;
+
+                const figCol = document.createElement('div');
+                figCol.className = `w-24 h-24 md:w-28 md:h-28 flex-shrink-0 flex items-center justify-center bg-white rounded-2xl p-2 shadow-sm border-2 border-sky-200`;
+                figCol.innerHTML = item.svg;
+                rowDiv.appendChild(figCol);
+
+                const optionsCol = document.createElement('div');
+                optionsCol.className = `flex flex-wrap items-center justify-center md:justify-end gap-5 md:gap-8 mt-4 md:mt-0 flex-1 px-3`;
+
+                options.forEach(word => {
+                    const wrap = document.createElement('span');
+                    wrap.className = 'word-wrap';
+                    const wordBtn = document.createElement('button');
+                    wordBtn.className = `word-btn-${item.id} px-5 py-3 bg-white hover:bg-sky-100 text-slate-700 font-bold text-lg md:text-2xl rounded-2xl border-2 border-sky-200 shadow-sm transition transform active:scale-95`;
+                    wordBtn.innerText = word;
+                    wordBtn.onclick = () => handleWordClick(item.id, word, item.name, wordBtn, rowDiv, wrap);
+                    wrap.appendChild(wordBtn);
+                    optionsCol.appendChild(wrap);
+                });
+                rowDiv.appendChild(optionsCol);
+                boardContainer.appendChild(rowDiv);
+            });
+        }
+
+        function handleWordClick(itemId, selectedWord, correctWord, buttonElement, rowElement, wrapElement) {
+            const rowButtons = rowElement.querySelectorAll(`.word-btn-${itemId}`);
+            if (selectedWord === correctWord) {
+                aciertos2++;
+                updateStats2();
+                rowButtons.forEach(b => b.style.pointerEvents = 'none');
+                
+                const oval = document.createElement('div');
+                oval.className = 'oval-ring';
+                wrapElement.appendChild(oval);
+
+                buttonElement.classList.remove('bg-white', 'border-sky-200');
+                buttonElement.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-800');
+                rowElement.classList.add('bg-emerald-50/50', 'border-emerald-200');
+
+                const successPhrases = ["¡MUY BIEN, ADELANTE!", "¡EXCELENTE!", "¡MUY BIEN!"];
+                hablar(successPhrases[Math.floor(Math.random() * successPhrases.length)]);
+
+                completedInRound++;
+                if (completedInRound === 5) {
+                    currentRound++;
+                    setTimeout(loadRound, 1800);
+                }
+            } else {
+                fallas2++;
+                updateStats2();
+                buttonElement.classList.add('shake', 'bg-rose-100', 'border-rose-400', 'text-rose-800');
+                const errorPhrases = ["INTÉNTALO DE NUEVO", "NO, NO...", "¡VAMOS, TÚ PUEDES!"];
+                hablar(errorPhrases[Math.floor(Math.random() * errorPhrases.length)]);
+
+                setTimeout(() => {
+                    buttonElement.classList.remove('shake', 'bg-rose-100', 'border-rose-400', 'text-rose-800');
+                }, 700);
+            }
+        }
+
+        // ============================================
+        // CONDICIONAL FINAL APP 2 -> REINICIAR TODO O REPETIR
+        // ============================================
+        function endGame() {
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-result').classList.remove('hidden');
+
+            document.getElementById('final-aciertos').innerText = aciertos2;
+            document.getElementById('final-fallas').innerText = fallas2;
+
+            let resultTitle = "";
+            let resultMsg = "";
+            let btnTexto = "";
+            let accionSiguiente = "";
+
+            // EVALUACIÓN DE CONDICIÓN (< 5 fallas aprueba, >= 5 repite)
+            if (fallas2 < 5) {
+                resultTitle = "¡Excelente Trabajo!";
+                resultMsg = "¡Completaste todas las pruebas con éxito! Eres un experto.";
+                btnTexto = "<i class='fa-solid fa-rotate-right text-xl'></i><span> REPETIR TODO EL JUEGO</span>";
+                accionSiguiente = "reiniciarTodoElJuego()";
+            } else {
+                resultTitle = "¡Buen esfuerzo!";
+                resultMsg = "Tuviste 5 o más fallas. Vamos a repetir esta actividad para que sigas aprendiendo.";
+                btnTexto = "<i class='fa-solid fa-rotate-right text-xl'></i><span> REPETIR ACTIVIDAD 2</span>";
+                accionSiguiente = "restartApp2()";
+            }
+
+            document.getElementById('result-title').innerText = resultTitle;
+            document.getElementById('result-message').innerText = resultMsg;
+            
+            const btnModal2 = document.getElementById("btnModal2");
+            btnModal2.innerHTML = btnTexto;
+            btnModal2.setAttribute("onclick", accionSiguiente);
+
+            hablar(resultTitle + ". " + resultMsg);
+        }
+
+        function restartApp2() {
+            startGame();
+        }
+
+        function reiniciarTodoElJuego() {
+            // Restaurar Pantallas App 2
+            document.getElementById('screen-result').classList.add('hidden');
+            document.getElementById('screen-welcome').classList.remove('hidden');
+            
+            // Ocultar App 2 y Mostrar App 1
+            document.getElementById("app2-container").style.display = "none";
+            
+            document.body.style.background = backgroundApp1;
+            document.getElementById("app1-container").style.display = "flex";
+
+            // Reiniciar todo en App 1
+            reiniciarJuego();
+        }
+
+    </script>
+</body>
+</html>
